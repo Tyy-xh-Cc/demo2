@@ -4,6 +4,7 @@ import com.example.demo.entity.Dto.*;
 import com.example.demo.entity.cakeTable.User;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.entity.cakeTableDto.user.*;
+import com.example.demo.utility.BaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
-public class UserService {
+public class UserService extends BaseService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository repository;
 
@@ -29,11 +30,26 @@ public class UserService {
     public List<User> getAllUsers() {
         return repository.findAll();
     }
-    public PageResponse<UserDto> getUsersByPage(PageRequest pageRequest) {
+    // 条件分页查询
+    public PageResponse<UserDto> getUsersByConditions(PageRequest pageRequest, UserQueryDto queryDto) {
         Pageable pageable = buildPageable(pageRequest);
-        Page<User> userPage = repository.findAll(pageable);
+        Page<User> userPage;
 
-        // 将User转换为UserDto，排除密码字段
+        // 根据查询条件选择不同的查询方法
+        if (queryDto.isEmpty()) {
+            // 如果没有查询条件，查询所有用户
+            userPage = repository.findAll(pageable);
+        } else {
+            // 使用复杂条件查询
+            userPage = repository.findByConditions(
+                    queryDto.getName(),
+                    queryDto.getPhone(),
+                    queryDto.getIdentity(),
+                    queryDto.getStatus(),
+                    pageable
+            );
+        }
+
         List<UserDto> userDtos = userPage.getContent().stream()
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
@@ -125,65 +141,7 @@ public class UserService {
 
         return new RechargeResponse(true, "充值成功", newBalance, balanceDto.getBalance());
     }
-    // 条件分页查询
-    public PageResponse<UserDto> getUsersByConditions(PageRequest pageRequest, UserQueryDto queryDto) {
-        Pageable pageable = buildPageable(pageRequest);
-        Page<User> userPage;
 
-        // 根据查询条件选择不同的查询方法
-        if (queryDto.isEmpty()) {
-            // 如果没有查询条件，查询所有用户
-            userPage = repository.findAll(pageable);
-        } else {
-            // 使用复杂条件查询
-            userPage = repository.findByConditions(
-                    queryDto.getName(),
-                    queryDto.getPhone(),
-                    queryDto.getIdentity(),
-                    queryDto.getStatus(),
-                    pageable
-            );
-        }
-
-        List<UserDto> userDtos = userPage.getContent().stream()
-                .map(this::convertToUserDto)
-                .collect(Collectors.toList());
-
-        return convertToPageResponse(userPage, userDtos);
-    }
-    // 将User转换为UserDto的私有方法
-    private UserDto convertToUserDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getPhone(),
-                user.getEmail(),
-                user.getAvatarUrl(),
-                user.getBalance(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getStatus(),
-                user.getIdentity()
-        );
-    }
-
-    // 构建Pageable对象
-    private Pageable buildPageable(PageRequest pageRequest) {
-        return org.springframework.data.domain.PageRequest.of(
-                pageRequest.getPage() - 1, // 前端从1开始，JPA从0开始
-                pageRequest.getSize()
-        );
-    }
-
-    // 转换为PageResponse
-    private <T> PageResponse<T> convertToPageResponse(Page<?> page, List<T> content) {
-        return new PageResponse<>(
-                content,
-                page.getNumber() + 1,
-                page.getSize(),
-                page.getTotalElements()
-        );
-    }
     public LoginResponse<?> login(LoginDto loginDto) {
         Optional<User> userOptional = repository.findByUsername(loginDto.getUsername());
         if (userOptional.isEmpty()) {

@@ -1,10 +1,13 @@
 package com.example.demo.Controller;
 
 import com.example.demo.Service.DeliveryPersonService;
+import com.example.demo.entity.Dto.LoginResponse;
 import com.example.demo.entity.Dto.PageRequest;
 import com.example.demo.entity.Dto.PageResponse;
 import com.example.demo.entity.cakeTableDto.deliveryPersons.DeliveryPersonDto;
 import com.example.demo.entity.cakeTableDto.deliveryPersons.DeliveryPersonQueryDto;
+import com.example.demo.entity.cakeTableDto.deliveryPersons.DeliveryPersonResponseDto;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,11 +21,8 @@ public class DeliveryPersonController {
         this.deliveryPersonService = deliveryPersonService;
     }
 
-    /**
-     * 配送员分页查询接口
-     * GET /api/delivery-persons?page=0&size=10&name=张&status=online&minRating=4.0
-     */
-    @GetMapping("/delivery-persons")
+
+    @GetMapping("/deliveryPersons")
     public PageResponse<DeliveryPersonDto> getPagedDeliveryPersons(
             @RequestParam int page,
             @RequestParam int size,
@@ -37,5 +37,42 @@ public class DeliveryPersonController {
         DeliveryPersonQueryDto queryDto = new DeliveryPersonQueryDto(name, phone, status, vehicleType, minRating, maxRating);
 
         return deliveryPersonService.getDeliveryPersonsByConditions(pageRequest, queryDto);
+    }
+    @DeleteMapping("/deliveryPersons/{id}")
+    public LoginResponse<?> deleteDeliveryPerson(@PathVariable Integer id) {
+        boolean deleted = deliveryPersonService.deleteDeliveryPerson(id);
+        if (deleted) {
+            return new LoginResponse<>(true, "配送员删除成功");
+        } else {
+            return new LoginResponse<>(false, "配送员不存在");
+        }
+    }
+    @PutMapping("/deliveryPersons/{id}")
+    public LoginResponse<?> updateDeliveryPerson(
+            @PathVariable Integer id,
+            @Valid @RequestBody DeliveryPersonDto requestDto) {
+            DeliveryPersonResponseDto responseDto = deliveryPersonService.updateDeliveryPerson(id, requestDto);
+
+            if (responseDto.isSuccess()) {
+                return new LoginResponse<>(true, responseDto.getMessage());
+            } else {
+                return new LoginResponse<>(false, responseDto.getMessage());
+            }
+    }
+    @PostMapping("/deliveryPersons")
+    public LoginResponse<?> createDeliveryPerson(
+            @Valid @RequestBody DeliveryPersonDto requestDto) {
+        try {
+            DeliveryPersonResponseDto responseDto = deliveryPersonService.createDeliveryPerson(requestDto);
+            if (responseDto.isSuccess()) {
+                return new LoginResponse<>(true, responseDto.getMessage());
+            } else {
+                return new LoginResponse<>(false, responseDto.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            return new LoginResponse<>(false, e.getMessage());
+        } catch (Exception e) {
+            return new LoginResponse<>(false, "创建配送员失败");
+        }
     }
 }

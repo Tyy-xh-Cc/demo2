@@ -1,26 +1,35 @@
 package com.example.demo.entity.cakeTableDto.deliveryPersons;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 
-public class DeliveryPersonDto {
-    private Integer id;
-    private String name;
-    private String phone;
-    private String idCard;
-    private String vehicleType;
-    private String licensePlate;
-    private String status;
-    private BigDecimal rating;
-    private Integer completedOrders;
-    private Instant createdAt;
+/**
+ * DTO for {@link com.example.demo.entity.cakeTable.DeliveryPerson}
+ */
+public class DeliveryPersonDto implements Serializable {
+    private final Integer id;
+    @NotNull
+    @Size(max = 50)
+    private final String name;
+    @NotNull
+    @Size(max = 20)
+    private final String phone;
+    @Size(max = 20)
+    private final String idCard;
+    private final String vehicleType;
+    @Size(max = 20)
+    private final String licensePlate;
+    private final String status;
+    private final BigDecimal rating;
+    private final Integer completedOrders;
+    private final Instant createdAt;
 
-    // 构造函数
-    public DeliveryPersonDto() {}
-
-    public DeliveryPersonDto(Integer id, String name, String phone, String idCard, 
-                           String vehicleType, String licensePlate, String status, 
-                           BigDecimal rating, Integer completedOrders, Instant createdAt) {
+    public DeliveryPersonDto(Integer id, String name, String phone, String idCard, String vehicleType, String licensePlate, String status, BigDecimal rating, Integer completedOrders, Instant createdAt) {
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -33,84 +42,80 @@ public class DeliveryPersonDto {
         this.createdAt = createdAt;
     }
 
-    // Getter和Setter方法
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getPhone() {
         return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public String getIdCard() {
         return idCard;
     }
 
-    public void setIdCard(String idCard) {
-        this.idCard = idCard;
-    }
-
     public String getVehicleType() {
         return vehicleType;
-    }
-
-    public void setVehicleType(String vehicleType) {
-        this.vehicleType = vehicleType;
     }
 
     public String getLicensePlate() {
         return licensePlate;
     }
 
-    public void setLicensePlate(String licensePlate) {
-        this.licensePlate = licensePlate;
-    }
-
     public String getStatus() {
         return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public BigDecimal getRating() {
         return rating;
     }
 
-    public void setRating(BigDecimal rating) {
-        this.rating = rating;
-    }
-
     public Integer getCompletedOrders() {
         return completedOrders;
-    }
-
-    public void setCompletedOrders(Integer completedOrders) {
-        this.completedOrders = completedOrders;
     }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DeliveryPersonDto entity = (DeliveryPersonDto) o;
+        return Objects.equals(this.id, entity.id) &&
+                Objects.equals(this.name, entity.name) &&
+                Objects.equals(this.phone, entity.phone) &&
+                Objects.equals(this.idCard, entity.idCard) &&
+                Objects.equals(this.vehicleType, entity.vehicleType) &&
+                Objects.equals(this.licensePlate, entity.licensePlate) &&
+                Objects.equals(this.status, entity.status) &&
+                Objects.equals(this.rating, entity.rating) &&
+                Objects.equals(this.completedOrders, entity.completedOrders) &&
+                Objects.equals(this.createdAt, entity.createdAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, phone, idCard, vehicleType, licensePlate, status, rating, completedOrders, createdAt);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" +
+                "id = " + id + ", " +
+                "name = " + name + ", " +
+                "phone = " + phone + ", " +
+                "idCard = " + idCard + ", " +
+                "vehicleType = " + vehicleType + ", " +
+                "licensePlate = " + licensePlate + ", " +
+                "status = " + status + ", " +
+                "rating = " + rating + ", " +
+                "completedOrders = " + completedOrders + ", " +
+                "createdAt = " + createdAt + ")";
     }
 }

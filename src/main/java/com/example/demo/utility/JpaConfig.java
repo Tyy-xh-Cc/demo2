@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
     basePackages = "com.example.demo.Repository"
 )
 public class JpaConfig {
+
 }

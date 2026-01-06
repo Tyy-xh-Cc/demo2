@@ -4,6 +4,7 @@ import com.example.demo.Repository.UserRepository;
 import com.example.demo.entity.Dto.*;
 import com.example.demo.entity.cakeTable.User;
 import com.example.demo.entity.cakeTableDto.user.*;
+import com.example.demo.utility.BaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
-public class UserService {
+public class UserService extends BaseService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository repository;
 
@@ -28,23 +29,7 @@ public class UserService {
     public List<User> getAllUsers() {
         return repository.findAll();
     }
-    public PageResponse<UserDto> getUsersByPage(PageRequest pageRequest) {
-        Pageable pageable = buildPageable(pageRequest);
-        Page<User> userPage = repository.findAll(pageable);
 
-        // 将User转换为UserDto，排除密码字段
-        List<UserDto> userDtos = userPage.getContent().stream()
-                .map(this::convertToUserDto)
-                .collect(Collectors.toList());
-
-        return convertToPageResponse(userPage, userDtos);
-    }
-    /**
-     * 更新用户状态
-     * @param userId 用户ID
-     * @param updateRequest 更新请求
-     * @return 更新响应
-     */
     @Transactional
     public UpdateStatusResponse updateUserStatus(Integer userId, StatusDto updateRequest) {
         // 查找用户
@@ -74,12 +59,6 @@ public class UserService {
         return new UpdateStatusResponse(true, "用户状态更新成功", oldStatus, newStatus, userId);
     }
 
-    /**
-     * 验证状态转换是否合法
-     * @param oldStatus 旧状态
-     * @param newStatus 新状态
-     * @return 是否合法
-     */
     private boolean isValidStatusTransition(String oldStatus, String newStatus) {
 
         if (oldStatus == null) {
@@ -93,12 +72,7 @@ public class UserService {
             default -> false;
         };
     }
-    /**
-     * 用户充值
-     * @param userId 用户ID
-     * @param balanceDto 充值请求
-     * @return 充值响应
-     */
+
     @Transactional
     public RechargeResponse rechargeUser(Integer userId, BalanceDto balanceDto) {
         // 查找用户
@@ -166,23 +140,6 @@ public class UserService {
         );
     }
 
-    // 构建Pageable对象
-    private Pageable buildPageable(PageRequest pageRequest) {
-        return org.springframework.data.domain.PageRequest.of(
-                pageRequest.getPage() - 1, // 前端从1开始，JPA从0开始
-                pageRequest.getSize()
-        );
-    }
-
-    // 转换为PageResponse
-    private <T> PageResponse<T> convertToPageResponse(Page<?> page, List<T> content) {
-        return new PageResponse<>(
-                content,
-                page.getNumber() + 1,
-                page.getSize(),
-                page.getTotalElements()
-        );
-    }
     public LoginResponse<?> login(LoginDto loginDto) {
         Optional<User> userOptional = repository.findByUsername(loginDto.getUsername());
         if (userOptional.isEmpty()) {

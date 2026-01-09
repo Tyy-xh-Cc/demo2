@@ -13,6 +13,7 @@ import java.util.Objects;
  */
 public class ProductDto implements Serializable {
     private final Integer id;
+    private final Integer restaurantId;
     private final Integer categoryId;
     @NotNull
     @Size(max = 100)
@@ -30,8 +31,9 @@ public class ProductDto implements Serializable {
     private final Instant createdAt;
     private final Instant updatedAt;
 
-    public ProductDto(Integer id, Integer categoryId, String name, String description, String imageUrl, BigDecimal price, BigDecimal originalPrice, Integer stock, Integer salesCount, Integer sortOrder, String status, Instant createdAt, Instant updatedAt) {
+    public ProductDto(Integer id, Integer restaurantId, Integer categoryId, String name, String description, String imageUrl, BigDecimal price, BigDecimal originalPrice, Integer stock, Integer salesCount, Integer sortOrder, String status, Instant createdAt, Instant updatedAt) {
         this.id = id;
+        this.restaurantId = restaurantId;
         this.categoryId = categoryId;
         this.name = name;
         this.description = description;
@@ -45,7 +47,9 @@ public class ProductDto implements Serializable {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
+    public Integer getRestaurantId() {
+        return restaurantId;
+    }
     public Integer getId() {
         return id;
     }

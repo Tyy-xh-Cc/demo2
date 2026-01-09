@@ -67,7 +67,6 @@ public class ProductController {
     @PostMapping("/products")
     public LoginResponse<?> createProduct(@Valid @RequestBody ProductRequestDto requestDto) {
         try {
-            System.out.println(requestDto.toString());
             ProductResponseDto responseDto = productService.createProduct(requestDto);
             if (responseDto.isSuccess()) {
                 return new LoginResponse<>(true, responseDto.getMessage());

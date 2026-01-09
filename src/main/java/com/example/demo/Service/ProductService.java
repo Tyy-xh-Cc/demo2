@@ -356,7 +356,7 @@ public class ProductService extends BaseService {
         
         return new ProductDto(
                 product.getId(),
-                product.getRestaurant() != null ? product.getRestaurant().getId() : null,
+                product.getRestaurant().getId(), product.getRestaurant() != null ? product.getRestaurant().getId() : null,
                 restaurantName,
                 product.getDescription(),
                 product.getImageUrl(),

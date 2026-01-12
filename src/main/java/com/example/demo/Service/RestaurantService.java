@@ -3,7 +3,6 @@ package com.example.demo.Service;
 import com.example.demo.Repository.RestaurantRepository;
 import com.example.demo.entity.Dto.PageRequest;
 import com.example.demo.entity.Dto.PageResponse;
-
 import com.example.demo.entity.cakeTable.Restaurant;
 import com.example.demo.entity.cakeTableDto.restaurant.RestaurantDto;
 import com.example.demo.entity.cakeTableDto.restaurant.RestaurantQueryDto;
@@ -13,6 +12,7 @@ import com.example.demo.utility.BaseService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -151,25 +151,38 @@ public class RestaurantService extends BaseService {
      * 条件分页查询餐厅
      */
     public PageResponse<RestaurantDto> getRestaurantsByConditions(PageRequest pageRequest, RestaurantQueryDto queryDto) {
-        Pageable pageable = buildPageable(pageRequest);
+        // 根据sortBy参数构建排序规则
+        Sort sort;
+        if (queryDto.getSortBy() != null) {
+            sort = switch (queryDto.getSortBy()) {
+                case "rating" -> Sort.by(Sort.Direction.DESC, "rating");
+                case "orders" -> Sort.by(Sort.Direction.DESC, "totalOrders");
+                case "price" -> Sort.by(Sort.Direction.ASC, "minOrderAmount");
+                default -> Sort.by(Sort.Direction.DESC, "createdAt");
+            };
+        } else {
+            // 默认按创建时间倒序
+            sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+        
+        // 构建分页请求，包含排序
+        PageRequest customPageRequest = new PageRequest(pageRequest.getPage(), pageRequest.getSize());
+        Pageable pageable = buildPageable(customPageRequest, sort);
+        
         Page<Restaurant> restaurantPage;
 
-        // 根据查询条件选择不同的查询方法
-        if (queryDto.isEmpty()) {
-            // 如果没有查询条件，查询所有餐厅
-            restaurantPage = repository.findAll(pageable);
-        } else {
-            // 使用复杂条件查询
-            restaurantPage = repository.findByConditions(
-                    queryDto.getName(),
-                    queryDto.getPhone(),
-                    queryDto.getAddress(),
-                    queryDto.getStatus(),
-                    queryDto.getMinRating(),
-                    queryDto.getMaxRating(),
-                    pageable
-            );
-        }
+        // 使用复杂条件查询
+        restaurantPage = repository.findByConditions(
+                queryDto.getName(),
+                queryDto.getPhone(),
+                queryDto.getAddress(),
+                queryDto.getStatus(),
+                queryDto.getMinRating(),
+                queryDto.getMaxRating(),
+                queryDto.getKeyword(),
+                queryDto.getMinOrderAmount(),
+                pageable
+        );
 
         // 将Restaurant转换为RestaurantDto
         List<RestaurantDto> restaurantDtos = restaurantPage.getContent().stream()

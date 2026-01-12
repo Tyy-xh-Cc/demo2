@@ -4,6 +4,7 @@ import com.example.demo.entity.Dto.PageRequest;
 import com.example.demo.entity.Dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -15,7 +16,13 @@ public class BaseService {
                 pageRequest.getSize()
         );
     }
-
+    protected Pageable buildPageable(PageRequest pageRequest, Sort sort) {
+        return org.springframework.data.domain.PageRequest.of(
+                pageRequest.getPage() - 1, // 前端从1开始，JPA从0开始
+                pageRequest.getSize(),
+                sort
+        );
+    }
     // 转换为PageResponse
     protected <T> PageResponse<T> convertToPageResponse(Page<?> page, List<T> content) {
         return new PageResponse<>(

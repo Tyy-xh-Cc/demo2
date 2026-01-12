@@ -2,7 +2,6 @@ package com.example.demo.Controller;
 
 import com.example.demo.Service.UserService;
 import com.example.demo.entity.Dto.*;
-import com.example.demo.entity.cakeTable.User;
 import com.example.demo.entity.cakeTableDto.user.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -77,7 +76,7 @@ public class UserController {
         return service.userlogin(loginDto);
     }
     @GetMapping("/users")
-    public List<User> getAllUsers() {
+    public List<UserDto> getAllUsers() {
         return service.getAllUsers();
     }
     @GetMapping("/paged/users")

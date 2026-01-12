@@ -3,7 +3,6 @@ package com.example.demo.Controller;
 import com.example.demo.Service.RestaurantService;
 import com.example.demo.entity.Dto.PageRequest;
 import com.example.demo.entity.Dto.PageResponse;
-
 import com.example.demo.entity.cakeTableDto.restaurant.RestaurantDto;
 import com.example.demo.entity.cakeTableDto.restaurant.RestaurantQueryDto;
 import com.example.demo.entity.cakeTableDto.restaurant.RestaurantRequestDto;
@@ -12,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -60,15 +60,18 @@ public class RestaurantController {
     public PageResponse<RestaurantDto> getPagedRestaurants(
             @RequestParam int page,
             @RequestParam int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sort_by,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) BigDecimal min_order_amount,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String address,
-            @RequestParam(required = false) String status,
             @RequestParam(required = false) Double minRating,
             @RequestParam(required = false) Double maxRating) {
 
         PageRequest pageRequest = new PageRequest(page, size);
-        RestaurantQueryDto queryDto = new RestaurantQueryDto(name, phone, address, status, minRating, maxRating);
+        RestaurantQueryDto queryDto = new RestaurantQueryDto(name, phone, address, status, minRating, maxRating, keyword, sort_by, min_order_amount);
 
         return restaurantService.getRestaurantsByConditions(pageRequest, queryDto);
     }

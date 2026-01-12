@@ -31,7 +31,7 @@ public class UserService extends BaseService {
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
     private final AddressRepository addressRepository;
-    private static HashMap<String,Integer> userToken=new HashMap<>();
+    private static final HashMap<String,Integer> userToken=new HashMap<>();
 
     // 修改构造函数，注入所需的Repository
     public UserService(UserRepository repository,
@@ -43,8 +43,10 @@ public class UserService extends BaseService {
         this.cartItemRepository = cartItemRepository;
         this.addressRepository = addressRepository;
     }
-    public List<User> getAllUsers() {
-        return repository.findAll();
+    public List<UserDto> getAllUsers() {
+        return repository.findAll().stream()
+                .map(this::convertToUserDto)
+                .collect(Collectors.toList());
     }
     public UserDto getUserByToken(String token) {
         // 从token映射中获取用户ID
@@ -65,7 +67,7 @@ public class UserService extends BaseService {
         User user = userOptional.get();
 
         // 检查用户状态
-        if ("inactive".equals(user.getStatus()) || "banned".equals(user.getStatus())) {
+        if ("banned".equals(user.getStatus())) {
             log.warn("用户状态异常，无法获取信息。用户ID: {}, 状态: {}", userId, user.getStatus());
             return null;
         }
@@ -307,7 +309,7 @@ public class UserService extends BaseService {
                 true,
                 "登录成功",
                 token,
-                user
+                convertToUserDto(user) // 使用convertToUserDto方法转换
         );
     }
     @Transactional
@@ -332,7 +334,7 @@ public class UserService extends BaseService {
                 true,
                 "登录成功",
                 token,
-                user
+                convertToUserDto(user) // 使用convertToUserDto方法转换
         );
 
     }

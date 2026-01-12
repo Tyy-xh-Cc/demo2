@@ -1,5 +1,8 @@
 package com.example.demo.Service;
 
+import com.example.demo.Repository.AddressRepository;
+import com.example.demo.Repository.CartItemRepository;
+import com.example.demo.Repository.OrderRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.entity.Dto.*;
 import com.example.demo.entity.cakeTable.User;
@@ -13,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,14 +28,154 @@ import java.util.stream.Collectors;
 public class UserService extends BaseService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository repository;
+    private final OrderRepository orderRepository;
+    private final CartItemRepository cartItemRepository;
+    private final AddressRepository addressRepository;
+    private static HashMap<String,Integer> userToken=new HashMap<>();
 
-    public UserService(UserRepository repository) {
+    // 修改构造函数，注入所需的Repository
+    public UserService(UserRepository repository,
+                       OrderRepository orderRepository,
+                       CartItemRepository cartItemRepository,
+                       AddressRepository addressRepository) {
         this.repository = repository;
+        this.orderRepository = orderRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.addressRepository = addressRepository;
     }
     public List<User> getAllUsers() {
         return repository.findAll();
     }
+    public UserDto getUserByToken(String token) {
+        // 从token映射中获取用户ID
+        Integer userId = userToken.get(token);
+        if (userId == null) {
+            log.warn("Token无效或已过期: {}", token);
+            return null;
+        }
 
+        // 根据用户ID查询用户信息
+        Optional<User> userOptional = repository.findById(userId);
+        if (userOptional.isEmpty()) {
+            log.error("Token对应的用户不存在，用户ID: {}", userId);
+            userToken.remove(token); // 清理无效的token
+            return null;
+        }
+
+        User user = userOptional.get();
+
+        // 检查用户状态
+        if ("inactive".equals(user.getStatus()) || "banned".equals(user.getStatus())) {
+            log.warn("用户状态异常，无法获取信息。用户ID: {}, 状态: {}", userId, user.getStatus());
+            return null;
+        }
+
+        // 转换为UserDto返回
+        return convertToUserDto(user);
+    }
+    /**
+     * 根据Token获取用户统计信息
+     * @param token 用户Token
+     * @return StatsResponse 包含统计信息或错误信息
+     */
+    public StatsResponse getUserStatsByToken(String token) {
+        Integer userId = userToken.get(token);
+        if (userId == null) {
+            return StatsResponse.error("Token无效或已过期");
+        }
+
+        return getUserStats(userId);
+    }
+
+    /**
+     * 获取用户统计信息
+     * @param userId 用户ID
+     * @return StatsResponse 包含统计信息或错误信息
+     */
+    public StatsResponse getUserStats(Integer userId) {
+        try {
+            // 1. 验证用户存在
+            Optional<User> userOptional = repository.findById(userId);
+            if (userOptional.isEmpty()) {
+                return StatsResponse.error("用户不存在");
+            }
+
+            User user = userOptional.get();
+
+            // 2. 查询订单统计
+            Long totalOrders = orderRepository.countByUser(user);
+            Long pendingOrders = orderRepository.countByUserAndStatus(user, "pending");
+            Long deliveringOrders = orderRepository.countByUserAndStatus(user, "delivering");
+            Long completedOrders = orderRepository.countByUserAndStatus(user, "completed");
+            Long cancelledOrders = orderRepository.countByUserAndStatus(user, "cancelled");
+
+            // 3. 查询消费统计
+            BigDecimal totalSpent = orderRepository.sumFinalAmountByUser(user);
+            if (totalSpent == null) {
+                totalSpent = BigDecimal.ZERO;
+            }
+
+            // 4. 计算平均订单金额
+            BigDecimal averageOrderValue = BigDecimal.ZERO;
+            if (totalOrders != null && totalOrders > 0 && totalSpent.compareTo(BigDecimal.ZERO) > 0) {
+                averageOrderValue = totalSpent.divide(new BigDecimal(totalOrders), 2, RoundingMode.HALF_UP);
+            }
+
+            // 5. 获取最近下单时间
+            Instant lastOrderTime = orderRepository.getLastOrderTimeByUser(user);
+
+            // 6. 查询购物车商品数量
+            Long totalCartItems = cartItemRepository.sumQuantityByUser(user);
+            if (totalCartItems == null) {
+                totalCartItems = 0L;
+            }
+
+            // 7. 查询地址数量
+            Long addressCount = addressRepository.countByUser(user);
+            if (addressCount == null) {
+                addressCount = 0L;
+            }
+
+            // 8. 构建统计DTO
+            UserStatsDto stats = new UserStatsDto(
+                    user.getId(),
+                    user.getUsername(),
+                    totalOrders != null ? totalOrders : 0L,
+                    pendingOrders != null ? pendingOrders : 0L,
+                    deliveringOrders != null ? deliveringOrders : 0L,
+                    completedOrders != null ? completedOrders : 0L,
+                    cancelledOrders != null ? cancelledOrders : 0L,
+                    totalSpent,
+                    averageOrderValue,
+                    lastOrderTime,
+                    totalCartItems,
+                    addressCount
+            );
+
+            return StatsResponse.success(stats);
+
+        } catch (Exception e) {
+            log.error("获取用户统计信息失败，用户ID: {}", userId, e);
+            return StatsResponse.error("获取统计信息失败: " + e.getMessage());
+        }
+    }
+    @Transactional
+    public boolean logout(String token) {
+        if (userToken.containsKey(token)) {
+            userToken.remove(token);
+            log.info("用户登出成功，Token已移除: {}", token);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 获取所有活跃的Token（用于调试或管理）
+     * @return 活跃Token列表
+     */
+    public HashMap<String, Integer> getActiveTokens() {
+        return new HashMap<>(userToken);
+    }
     @Transactional
     public UpdateStatusResponse updateUserStatus(Integer userId, StatusDto updateRequest) {
         // 查找用户
@@ -156,7 +302,7 @@ public class UserService extends BaseService {
             return new LoginResponse<>(false, "非管理员用户，无法登录");
         }
         String token = generateToken(user);
-
+        userToken.put(token,user.getId());
         return new LoginResponse<>(
                 true,
                 "登录成功",
@@ -181,13 +327,14 @@ public class UserService extends BaseService {
             return new LoginResponse<>(false, "非用户，无法登录");
         }
         String token = generateToken(user);
-
+        userToken.put(token,user.getId());
         return new LoginResponse<>(
                 true,
                 "登录成功",
                 token,
                 user
         );
+
     }
     // 生成简单的token（实际项目中应该使用JWT）
     private String generateToken(User user) {

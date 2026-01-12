@@ -40,4 +40,5 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
                                     @Param("identity") String identity,
                                     @Param("status") String status,
                                     Pageable pageable);
+
 }

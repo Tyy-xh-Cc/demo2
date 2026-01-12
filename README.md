@@ -191,7 +191,20 @@ CREATE TABLE order_items
             ON DELETE CASCADE
 ) COMMENT = '订单商品表，存储订单中每个商品的详细信息';
 ALTER TABLE delivery_persons COMMENT = '配送员信息表，存储配送员的个人信息和工作状态';
-
+CREATE TABLE banners (
+    banner_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '轮播图ID',
+    title VARCHAR(100) NOT NULL COMMENT '轮播图标题',
+    image_url VARCHAR(500) NOT NULL COMMENT '图片URL',
+    link_url VARCHAR(500) NULL COMMENT '跳转链接（可为商品、餐厅、活动等）',
+    link_type ENUM('product', 'restaurant', 'promotion', 'external', 'none') DEFAULT 'none' COMMENT '链接类型',
+    link_id INT NULL COMMENT '关联ID（商品ID、餐厅ID等）',
+    sort_order INT DEFAULT 0 COMMENT '排序（数字越小越靠前）',
+    status ENUM('active', 'inactive', 'deleted') DEFAULT 'active' COMMENT '状态',
+    start_time TIMESTAMP NULL COMMENT '开始显示时间',
+    end_time TIMESTAMP NULL COMMENT '结束显示时间',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) COMMENT = '轮播图表，存储首页轮播图信息';
 -- 餐厅表
 ALTER TABLE restaurants COMMENT = '餐厅信息表，存储餐厅的基本信息、位置和营业状态';
 

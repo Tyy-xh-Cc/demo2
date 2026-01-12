@@ -12,6 +12,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
@@ -23,7 +25,16 @@ public class RestaurantController {
         this.restaurantService = restaurantService;
     }
 
-
+    @GetMapping("/restaurants/recommended")
+    public ResponseEntity<List<RestaurantDto>> getRecommendedRestaurants(
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<RestaurantDto> recommendedRestaurants = restaurantService.getRecommendedRestaurants(limit);
+            return ResponseEntity.ok(recommendedRestaurants);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
     @PostMapping("/restaurants")
     public ResponseEntity<RestaurantResponseDto> addRestaurant(@Valid @RequestBody RestaurantRequestDto requestDto) {
         try {

@@ -140,7 +140,7 @@ public class UserService extends BaseService {
         );
     }
 
-    public LoginResponse<?> login(LoginDto loginDto) {
+    public LoginResponse<?> rootlogin(LoginDto loginDto) {
         Optional<User> userOptional = repository.findByUsername(loginDto.getUsername());
         if (userOptional.isEmpty()) {
             log.error("User not found");
@@ -151,12 +151,11 @@ public class UserService extends BaseService {
             log.info("User found: {}", user);
             return new LoginResponse<>(false, "用户名或密码错误");
         }
-        if (!user.getIdentity().equals("3")) {
+        if (!user.getIdentity().equals("0")) {
             log.warn("Non-root user tried to login: {}", user);
             return new LoginResponse<>(false, "非管理员用户，无法登录");
         }
         String token = generateToken(user);
-
 
         return new LoginResponse<>(
                 true,
@@ -165,7 +164,31 @@ public class UserService extends BaseService {
                 user
         );
     }
+    @Transactional
+    public LoginResponse<?> userlogin(LoginDto loginDto) {
+        Optional<User> userOptional = repository.findByUsername(loginDto.getUsername());
+        if (userOptional.isEmpty()) {
+            log.error("User not found");
+            return new LoginResponse<>(false, "用户名或密码错误");
+        }
+        User user = userOptional.get();
+        if (!user.getPasswordHash().equals(loginDto.getPasswordHash())) {
+            log.info("User found: {}", user);
+            return new LoginResponse<>(false, "用户名或密码错误");
+        }
+        if (!user.getIdentity().equals("1")) {
+            log.warn("Non-user tried to login: {}", user);
+            return new LoginResponse<>(false, "非用户，无法登录");
+        }
+        String token = generateToken(user);
 
+        return new LoginResponse<>(
+                true,
+                "登录成功",
+                token,
+                user
+        );
+    }
     // 生成简单的token（实际项目中应该使用JWT）
     private String generateToken(User user) {
         // 这里简化处理，实际应该使用JWT等安全的token生成机制

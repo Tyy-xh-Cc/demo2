@@ -67,7 +67,18 @@ public class RestaurantService extends BaseService {
         // 转换为响应DTO
         return convertToResponseDto(savedRestaurant);
     }
+    public List<RestaurantDto> getRecommendedRestaurants(int limit) {
+        // 构建分页请求，只获取指定数量的推荐餐厅
+        Pageable pageable = buildPageable(new PageRequest(0, limit));
 
+        // 查询推荐餐厅（按照评分和订单量排序，只显示营业中的餐厅）
+        List<Restaurant> recommendedRestaurants = repository.findRecommendedRestaurants(pageable);
+
+        // 转换为DTO
+        return recommendedRestaurants.stream()
+                .map(this::convertToRestaurantDto)
+                .collect(Collectors.toList());
+    }
     @Transactional
     public RestaurantResponseDto updateRestaurant(Integer id, RestaurantRequestDto requestDto) {
         // 查找餐厅

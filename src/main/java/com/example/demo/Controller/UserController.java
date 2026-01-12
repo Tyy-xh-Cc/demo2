@@ -20,8 +20,12 @@ public class UserController {
         this.service = service;
     }
     @PostMapping("/auth/login")
-    public LoginResponse<?> login(@RequestBody LoginDto loginDto) {
-        return service.login(loginDto);
+    public LoginResponse<?> rootlogin(@RequestBody LoginDto loginDto) {
+        return service.rootlogin(loginDto);
+    }
+    @PostMapping("/user/login")
+    public LoginResponse<?> userlogin(@RequestBody LoginDto loginDto) {
+        return service.userlogin(loginDto);
     }
     @GetMapping("/users")
     public List<User> getAllUsers() {

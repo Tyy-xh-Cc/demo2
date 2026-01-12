@@ -8,10 +8,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Integer>, JpaSpecificationExecutor<Restaurant> {
     Page<Restaurant> findAll(Pageable pageable);
+
     Optional<Restaurant> findByName(String name);
     // 复杂条件组合查询
     @Query("SELECT r FROM Restaurant r WHERE " +
@@ -29,4 +31,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Integer>
             @Param("minRating") Double minRating,
             @Param("maxRating") Double maxRating,
             Pageable pageable);
+    @Query("SELECT r FROM Restaurant r WHERE r.status = 'open' " +
+            "ORDER BY r.rating DESC, r.totalOrders DESC")
+    List<Restaurant> findRecommendedRestaurants(Pageable pageable);
 }

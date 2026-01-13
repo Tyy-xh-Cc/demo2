@@ -62,7 +62,9 @@ public class Address {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
-
+    @Size(max = 100)
+    @Column(name = "area", length = 100)
+    private String area;
     public Integer getId() {
         return id;
     }
@@ -143,6 +145,14 @@ public class Address {
         this.createdAt = createdAt;
     }
 
+    public Boolean getDefault() {
+        return isDefault;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
@@ -157,5 +167,9 @@ public class Address {
     @Override
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
+
+    public void setArea(String area) {
+
     }
 }

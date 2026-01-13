@@ -13,6 +13,8 @@ public class AddressDto implements Serializable {
     private final Integer userId;
     private final String name;
     private final String receiverName;
+    private final String area;
+
     private final String phone;
     private final String address;
     private final BigDecimal latitude;
@@ -20,17 +22,22 @@ public class AddressDto implements Serializable {
     private final Boolean isDefault;
     private final Instant createdAt;
 
-    public AddressDto(Integer id, Integer userId, String name, String receiverName, String phone, String address, BigDecimal latitude, BigDecimal longitude, Boolean isDefault, Instant createdAt) {
+    public AddressDto(Integer id, Integer userId, String name, String receiverName, String area, String phone, String address, BigDecimal latitude, BigDecimal longitude, Boolean isDefault, Instant createdAt) {
         this.id = id;
         this.userId = userId;
         this.name = name;
         this.receiverName = receiverName;
+        this.area = area;
         this.phone = phone;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
         this.isDefault = isDefault;
         this.createdAt = createdAt;
+    }
+
+    public Boolean getDefault() {
+        return isDefault;
     }
 
     public Integer getId() {
@@ -108,5 +115,9 @@ public class AddressDto implements Serializable {
                 "longitude = " + longitude + ", " +
                 "isDefault = " + isDefault + ", " +
                 "createdAt = " + createdAt + ")";
+    }
+
+    public String getArea() {
+        return area;
     }
 }

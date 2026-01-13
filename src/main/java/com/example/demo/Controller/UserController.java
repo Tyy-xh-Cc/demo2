@@ -18,6 +18,15 @@ public class UserController {
     public UserController(UserService service) {
         this.service = service;
     }
+    @PostMapping("/user/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody LoginDto loginDto) {
+        RechargeResponse response = service.registerUser(loginDto);
+        if (response.isSuccess()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
     @GetMapping("/user/profile")
     public ResponseEntity<?> getUserProfile(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

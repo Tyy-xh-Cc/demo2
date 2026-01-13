@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import com.example.demo.Controller.SmsController;
 import com.example.demo.Repository.AddressRepository;
 import com.example.demo.Repository.CartItemRepository;
 import com.example.demo.Repository.OrderRepository;
@@ -20,6 +21,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -314,33 +316,74 @@ public class UserService extends BaseService {
     }
     @Transactional
     public LoginResponse<?> userlogin(LoginDto loginDto) {
-        Optional<User> userOptional = repository.findByUsername(loginDto.getUsername());
-        if (userOptional.isEmpty()) {
-            log.error("User not found");
-            return new LoginResponse<>(false, "用户名或密码错误");
+        Optional<User> userOptional;
+        System.out.println(loginDto.getLogin_type());
+        switch (loginDto.getLogin_type()) {
+            case "phone_password", "sms" -> userOptional =repository.findByPhone(loginDto.getPhone());
+            case "password" -> userOptional =repository.findByUsername(loginDto.getUsername());
+            default -> {
+                log.error("Unsupported login type: {}", loginDto.getLogin_type());
+                return new LoginResponse<>(false, "不支持的登录方式");
+            }
         }
-        User user = userOptional.get();
-        if (!user.getPasswordHash().equals(loginDto.getPasswordHash())) {
-            log.info("User found: {}", user);
-            return new LoginResponse<>(false, "用户名或密码错误");
-        }
-        if (!user.getIdentity().equals("1")) {
-            log.warn("Non-user tried to login: {}", user);
-            return new LoginResponse<>(false, "非用户，无法登录");
-        }
-        String token = generateToken(user);
-        userToken.put(token,user.getId());
-        return new LoginResponse<>(
-                true,
-                "登录成功",
-                token,
-                convertToUserDto(user) // 使用convertToUserDto方法转换
-        );
-
+            if (userOptional.isEmpty()) {
+                log.error("User not found");
+                return new LoginResponse<>(false, "用户名或密码错误");
+            }
+            User user = userOptional.get();
+            if (Objects.equals(loginDto.getLogin_type(), "sms"))
+            {
+                if (!loginDto.getSms_code().equals(SmsController.smsCodes.get(loginDto.getPhone()))) {
+                    log.info("User found: {}", user);
+                    return new LoginResponse<>(false, "短信验证码错误");
+                }
+            }else {
+                if (!user.getPasswordHash().equals(loginDto.getPasswordHash())) {
+                    log.info("User found: {}", user);
+                    return new LoginResponse<>(false, "用户名或密码错误");
+                }
+            }
+            String token = generateToken(user);
+            userToken.put(token, user.getId());
+            return new LoginResponse<>(
+                    true,
+                    "登录成功",
+                    token,
+                    convertToUserDto(user) // 使用convertToUserDto方法转换
+            );
     }
     // 生成简单的token（实际项目中应该使用JWT）
     private String generateToken(User user) {
         // 这里简化处理，实际应该使用JWT等安全的token生成机制
         return "token_" + user.getId() + "_" + System.currentTimeMillis();
+    }
+    @Transactional
+    public RechargeResponse registerUser(LoginDto loginDto) {
+        if (repository.findByUsername(loginDto.getUsername()).isPresent()) {
+            return new RechargeResponse(false, "用户名已存在", BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        // Check if phone already exists
+        if (repository.findByPhone(loginDto.getPhone()).isPresent()) {
+            return new RechargeResponse(false, "手机号已注册", BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        // Create new user
+        User newUser = new User();
+        newUser.setUsername(loginDto.getUsername());
+        newUser.setPasswordHash(loginDto.getPasswordHash());
+        newUser.setPhone(loginDto.getPhone());
+        newUser.setAvatarUrl("http://localhost:8080/images/user/1.png");
+        newUser.setBalance(BigDecimal.ZERO);
+        newUser.setStatus("active");
+        newUser.setIdentity("1"); // Default to normal user
+        newUser.setCreatedAt(Instant.now());
+        newUser.setUpdatedAt(Instant.now());
+
+        // Save the new user
+        User savedUser = repository.save(newUser);
+
+        // Return success response with initial balance
+        return new RechargeResponse(true, "注册成功", BigDecimal.ZERO, BigDecimal.ZERO);
     }
 }

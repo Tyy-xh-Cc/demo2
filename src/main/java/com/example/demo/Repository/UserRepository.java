@@ -41,4 +41,5 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
                                     @Param("status") String status,
                                     Pageable pageable);
 
+    Optional<User> findByPhone(String phone);
 }

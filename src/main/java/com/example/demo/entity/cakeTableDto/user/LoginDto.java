@@ -1,6 +1,5 @@
 package com.example.demo.entity.cakeTableDto.user;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.io.Serializable;
@@ -10,16 +9,32 @@ import java.util.Objects;
  * DTO for {@link com.example.demo.entity.cakeTable.User}
  */
 public class LoginDto implements Serializable {
-    @NotNull
     @Size(max = 50)
-    private final String username;
-    @NotNull
-    @Size(max = 255)
-    private final String passwordHash;
+    private String username;
 
-    public LoginDto(String username, String passwordHash) {
+    @Size(max = 255)
+    private String passwordHash;
+
+    private final String phone;
+    private final String sms_code;
+    private final String login_type;
+    public LoginDto(String username, String passwordHash, String phone, String sms_code, String login_type) {
         this.username = username;
         this.passwordHash = passwordHash;
+        this.phone = phone;
+        this.sms_code = sms_code;
+        this.login_type = login_type;
+    }
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getSms_code() {
+        return sms_code;
+    }
+
+    public String getLogin_type() {
+        return login_type;
     }
 
     public String getUsername() {

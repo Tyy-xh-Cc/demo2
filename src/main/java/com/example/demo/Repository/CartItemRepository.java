@@ -23,13 +23,16 @@ public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
     List<CartItem> findByUserIdAndIdIn(Integer userId, List<Integer> ids);
     
     // 统计用户购物车商品数量
-    @Query("SELECT SUM(ci.quantity) FROM CartItem ci WHERE ci.user.id = :userId")
+
+    @Query("SELECT COALESCE(SUM(ci.quantity), 0) FROM CartItem ci WHERE ci.user.id = :userId")
     Integer countItemsByUserId(@Param("userId") Integer userId);
-    
+
+
+
     // 统计用户购物车商品种类数
-    @Query("SELECT COUNT(DISTINCT ci.product.id) FROM CartItem ci WHERE ci.user.id = :userId")
+    @Query("SELECT COALESCE(COUNT(DISTINCT ci.product.id), 0) FROM CartItem ci WHERE ci.user.id = :userId")
     Integer countProductsByUserId(@Param("userId") Integer userId);
-    
+
     // 删除用户的购物车项
     void deleteByUserId(Integer userId);
 }

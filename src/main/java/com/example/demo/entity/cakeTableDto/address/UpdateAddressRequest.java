@@ -32,6 +32,20 @@ public class UpdateAddressRequest implements Serializable {
         this.longitude = longitude;
     }
 
+    @Override
+    public String toString() {
+        return "UpdateAddressRequest{" +
+                "name='" + name + '\'' +
+                ", receiverName='" + receiverName + '\'' +
+                ", phone='" + phone + '\'' +
+                ", address='" + address + '\'' +
+                ", area='" + area + '\'' +
+                ", isDefault=" + isDefault +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                '}';
+    }
+
     // Getter方法
     public String getName() {
         return name;

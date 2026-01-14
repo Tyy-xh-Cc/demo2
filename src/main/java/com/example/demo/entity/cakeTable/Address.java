@@ -65,6 +65,24 @@ public class Address {
     @Size(max = 100)
     @Column(name = "area", length = 100)
     private String area;
+
+    @Override
+    public String toString() {
+        return "Address{" +
+                "id=" + id +
+                ", user=" + user +
+                ", name='" + name + '\'' +
+                ", receiverName='" + receiverName + '\'' +
+                ", phone='" + phone + '\'' +
+                ", address='" + address + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", isDefault=" + isDefault +
+                ", createdAt=" + createdAt +
+                ", area='" + area + '\'' +
+                '}';
+    }
+
     public Integer getId() {
         return id;
     }
@@ -170,6 +188,6 @@ public class Address {
     }
 
     public void setArea(String area) {
-
+        this.area=area;
     }
 }

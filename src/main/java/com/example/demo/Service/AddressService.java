@@ -35,7 +35,7 @@ public class AddressService extends BaseService {
         }
     }
     @Transactional
-    public AddressDto createAddress(Integer userId, UpdateAddressRequest request) {
+    public void createAddress(Integer userId, UpdateAddressRequest request) {
         try {
             // 创建新的地址实体
             Address address = new Address();
@@ -61,10 +61,7 @@ public class AddressService extends BaseService {
                 address.setLongitude(request.getLongitude());
             }
 
-            // 保存地址
-            Address savedAddress = addressRepository.save(address);
-            return convertToAddressDto(savedAddress);
-
+            addressRepository.save(address);
         } catch (Exception e) {
             throw new RuntimeException("创建地址失败: " + e.getMessage());
         }
@@ -74,7 +71,8 @@ public class AddressService extends BaseService {
         try {
             Address address = addressRepository.findById(addressId)
                     .orElseThrow(() -> new RuntimeException("地址不存在"));
-
+            System.out.println(request.toString());
+            System.out.println(address.toString());
             // 更新地址信息
             address.setName(request.getName());
             address.setReceiverName(request.getReceiverName());

@@ -129,10 +129,7 @@ public class UserService extends BaseService {
             Instant lastOrderTime = orderRepository.getLastOrderTimeByUser(user);
 
             // 6. 查询购物车商品数量
-            Long totalCartItems = cartItemRepository.sumQuantityByUser(user);
-            if (totalCartItems == null) {
-                totalCartItems = 0L;
-            }
+            Long totalCartItems = Long.valueOf(cartItemRepository.countItemsByUserId(user.getId()));
 
             // 7. 查询地址数量
             Long addressCount = addressRepository.countByUser(user);

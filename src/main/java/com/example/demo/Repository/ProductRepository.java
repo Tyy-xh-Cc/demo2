@@ -56,4 +56,14 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
 
     // 检查同一餐厅下是否存在同名产品
     Optional<Product> findByRestaurantIdAndName(Integer restaurantId, String name);
+
+    Integer countByRestaurantId(Integer id);
+    
+    // 根据分类ID和状态查找产品
+    List<Product> findByCategoryIdAndStatus(Integer categoryId, String status);
+
+    // 根据餐厅ID和分类ID查找产品
+    List<Product> findByRestaurantIdAndCategoryId(Integer restaurantId, Integer categoryId);
+
+    Integer countByCategoryId(Integer categoryId);
 }

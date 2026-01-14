@@ -3,6 +3,7 @@ package com.example.demo.Controller;
 import com.example.demo.Service.AddressService;
 
 import com.example.demo.Service.UserService;
+import com.example.demo.entity.Dto.RechargeResponse;
 import com.example.demo.entity.cakeTableDto.address.AddressDto;
 import com.example.demo.entity.cakeTableDto.address.UpdateAddressRequest;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +23,8 @@ public class AddressController {
         this.userService = userService;
     }
     @PostMapping("/addresses")
-    public ResponseEntity<AddressDto> createAddress(@RequestHeader(value = "Authorization", required = false) String authHeader,
-                                                    @RequestBody UpdateAddressRequest request) {
+    public ResponseEntity<RechargeResponse> createAddress(@RequestHeader(value = "Authorization", required = false) String authHeader,
+                                        @RequestBody UpdateAddressRequest request) {
         try {
             // 检查Authorization头是否存在
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -32,18 +33,18 @@ public class AddressController {
 
             // 提取token
             String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
-
             // 根据token获取用户ID
+            System.out.println(request.getArea());
             Integer userId = userService.getUserByToken(token) != null ?
                     userService.getUserByToken(token).getId() : null;
 
             if (userId == null) {
                 return ResponseEntity.status(401).body(null);
             }
-
-            // 创建地址
-            AddressDto createdAddress = addressService.createAddress(userId, request);
-            return ResponseEntity.ok(createdAddress);
+            addressService.createAddress(userId, request);
+            RechargeResponse response=new RechargeResponse();
+            response.setSuccess(true);
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
@@ -80,11 +81,13 @@ public class AddressController {
             AddressDto updatedAddress = addressService.updateAddress(addressId, request);
             return ResponseEntity.ok(updatedAddress);
         } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             if (e.getMessage().contains("地址不存在")) {
                 return ResponseEntity.status(404).body(null);
             }
             return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().body(null);
         }
     }

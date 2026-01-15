@@ -99,14 +99,13 @@ public class RestaurantController {
     public ResponseEntity<?> getRestaurantCategories(@PathVariable Integer restaurantId) {
         try {
             List<CategorySimpleDto> categories = restaurantService.getRestaurantCategories(restaurantId);
-
             if (categories == null || categories.isEmpty()) {
                 return ResponseEntity.ok()
                         .body(new LoginResponse<>(true, "该餐厅暂无分类", null, List.of()));
             }
 
             return ResponseEntity.ok()
-                    .body(new LoginResponse<>(true, "获取成功", null, categories));
+                    .body(categories);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()

@@ -1,5 +1,6 @@
 package com.example.demo.entity.cakeTableDto.cart;
 
+import com.example.demo.entity.cakeTableDto.restaurant.RestaurantDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.Objects;
 public class CartItemDto implements Serializable {
     private final Integer id;
     private final Integer userId;
+    private final RestaurantDto restaurant;
     private final Integer restaurantId;
     private final String restaurantName;
     private final Integer productId;
@@ -28,13 +30,14 @@ public class CartItemDto implements Serializable {
     private final Instant updatedAt;
     private final Boolean available; // 商品是否可用（库存、状态等）
 
-    public CartItemDto(Integer id, Integer userId, Integer restaurantId, String restaurantName,
-                      Integer productId, String productName, String productImageUrl,
-                      BigDecimal productPrice, BigDecimal originalPrice, Integer stock,
-                      Integer quantity, BigDecimal totalPrice, String specifications,
-                      Instant createdAt, Instant updatedAt, Boolean available) {
+    public CartItemDto(Integer id, Integer userId, RestaurantDto restaurant, Integer restaurantId, String restaurantName,
+                       Integer productId, String productName, String productImageUrl,
+                       BigDecimal productPrice, BigDecimal originalPrice, Integer stock,
+                       Integer quantity, BigDecimal totalPrice, String specifications,
+                       Instant createdAt, Instant updatedAt, Boolean available) {
         this.id = id;
         this.userId = userId;
+        this.restaurant = restaurant;
         this.restaurantId = restaurantId;
         this.restaurantName = restaurantName;
         this.productId = productId;
@@ -80,5 +83,9 @@ public class CartItemDto implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public RestaurantDto getRestaurant() {
+        return restaurant;
     }
 }

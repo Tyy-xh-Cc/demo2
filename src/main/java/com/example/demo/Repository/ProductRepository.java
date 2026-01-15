@@ -3,6 +3,7 @@ package com.example.demo.Repository;
 import com.example.demo.entity.cakeTable.Product;
 
 
+import com.example.demo.entity.cakeTableDto.product.ProductDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer>, JpaSpecificationExecutor<Product> {
-    List<Product> findByRestaurantId(Integer restaurantId);
+    @Query("SELECT p.id as id, p.categoryId as categoryId, p.restaurant.id as restaurantId, " +
+            "p.name as name, p.description as description, p.imageUrl as imageUrl, " +
+            "p.price as price, p.originalPrice as originalPrice, p.stock as stock, " +
+            "p.salesCount as salesCount, p.sortOrder as sortOrder, p.status as status, " +
+            "p.createdAt as createdAt, p.updatedAt as updatedAt " +
+            "FROM Product p WHERE p.restaurant.id = :restaurantId")
+    List<ProductDto> findByRestaurantId(Integer restaurantId);
 
     // 根据分类ID查询产品
     List<Product> findByCategoryId(Integer categoryId);

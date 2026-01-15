@@ -17,7 +17,16 @@ public class CartItemRequestDto {
         this.quantity = quantity;
         this.specifications = specifications;
     }
-    
+
+    @Override
+    public String toString() {
+        return "CartItemRequestDto{" +
+                "productId=" + productId +
+                ", quantity=" + quantity +
+                ", specifications='" + specifications + '\'' +
+                '}';
+    }
+
     // Getters and Setters
     public Integer getProductId() { return productId; }
     public void setProductId(Integer productId) { this.productId = productId; }

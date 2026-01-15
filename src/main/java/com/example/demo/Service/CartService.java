@@ -3,10 +3,13 @@ package com.example.demo.Service;
 import com.example.demo.Repository.CartItemRepository;
 import com.example.demo.Repository.ProductRepository;
 import com.example.demo.Repository.RestaurantRepository;
+import com.example.demo.Repository.UserRepository;
 import com.example.demo.entity.cakeTable.CartItem;
 import com.example.demo.entity.cakeTable.Product;
 import com.example.demo.entity.cakeTable.Restaurant;
+import com.example.demo.entity.cakeTable.User;
 import com.example.demo.entity.cakeTableDto.cart.*;
+import com.example.demo.entity.cakeTableDto.restaurant.RestaurantDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,13 +29,14 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final RestaurantRepository restaurantRepository;
-    
+    private final UserRepository userRepository;
     public CartService(CartItemRepository cartItemRepository,
-                      ProductRepository productRepository,
-                      RestaurantRepository restaurantRepository) {
+                       ProductRepository productRepository,
+                       RestaurantRepository restaurantRepository, UserRepository userRepository) {
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
         this.restaurantRepository = restaurantRepository;
+        this.userRepository = userRepository;
     }
     
     /**
@@ -60,7 +64,6 @@ public class CartService {
     @Transactional
     public CartItemDto addCartItem(Integer userId, CartItemRequestDto requestDto) {
         try {
-            // 验证请求参数
             if (requestDto.getProductId() == null) {
                 throw new IllegalArgumentException("商品ID不能为空");
             }
@@ -77,18 +80,19 @@ public class CartService {
             if (!"available".equals(product.getStatus())) {
                 throw new IllegalArgumentException("商品暂不可用");
             }
-            
+
             // 检查库存
             if (product.getStock() != -1 && product.getStock() < requestDto.getQuantity()) {
                 throw new IllegalArgumentException("商品库存不足");
             }
-            
+
             // 获取餐厅信息
             Restaurant restaurant = product.getRestaurant();
             if (restaurant == null) {
                 throw new IllegalArgumentException("商品所属餐厅信息不完整");
             }
-            
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
             // 检查购物车中是否已有该商品
             Optional<CartItem> existingItem = cartItemRepository.findByUserIdAndProductId(userId, product.getId());
             
@@ -97,7 +101,7 @@ public class CartService {
                 // 如果已存在，更新数量
                 cartItem = existingItem.get();
                 Integer newQuantity = cartItem.getQuantity() + requestDto.getQuantity();
-                
+
                 // 再次检查库存
                 if (product.getStock() != -1 && product.getStock() < newQuantity) {
                     throw new IllegalArgumentException("商品库存不足，当前购物车已有" + cartItem.getQuantity() + "件");
@@ -110,19 +114,17 @@ public class CartService {
                 // 创建新的购物车项
                 cartItem = new CartItem();
                 cartItem.setRestaurantId(restaurant.getId());
+                cartItem.setUser(user);
                 cartItem.setProduct(product);
                 cartItem.setQuantity(requestDto.getQuantity());
                 cartItem.setSpecifications(requestDto.getSpecifications());
                 cartItem.setCreatedAt(Instant.now());
                 cartItem.setUpdatedAt(Instant.now());
             }
-            
-            // 保存购物车项
             CartItem savedCartItem = cartItemRepository.save(cartItem);
-            
             return convertToDto(savedCartItem);
-            
         } catch (IllegalArgumentException e) {
+            log.warn("添加购物车失败，用户ID: {}, 商品ID: {}, 错误信息: {}", userId, requestDto.getProductId(), e.getMessage());
             throw e; // 重新抛出验证异常
         } catch (Exception e) {
             log.error("添加购物车失败，用户ID: {}, 商品ID: {}", userId, requestDto.getProductId(), e);
@@ -327,10 +329,14 @@ public class CartService {
         if (product != null && product.getPrice() != null) {
             totalPrice = product.getPrice().multiply(new BigDecimal(cartItem.getQuantity()));
         }
-        
+        RestaurantDto restaurantDto = null;
+        if (restaurant != null) {
+            restaurantDto = new RestaurantDto(restaurant);
+        }
         return new CartItemDto(
             cartItem.getId(),
             cartItem.getUser().getId(),
+            restaurant != null ? restaurantDto : null,
             restaurant != null ? restaurant.getId() : null,
             restaurant != null ? restaurant.getName() : null,
             product != null ? product.getId() : null,

@@ -111,4 +111,14 @@ public class OrderItem {
         this.specifications = specifications;
     }
 
+    public void setProduct(Product product) {
+        this.productId = product.getId();
+        this.productName = product.getName();
+        this.unitPrice = product.getPrice();
+        this.totalPrice = product.getPrice();
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.totalPrice = price;
+    }
 }

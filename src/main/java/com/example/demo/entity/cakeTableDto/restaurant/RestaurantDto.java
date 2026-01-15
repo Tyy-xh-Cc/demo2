@@ -1,5 +1,7 @@
 package com.example.demo.entity.cakeTableDto.restaurant;
 
+import com.example.demo.entity.cakeTable.Restaurant;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -43,6 +45,24 @@ public class RestaurantDto {
         this.totalOrders = totalOrders;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+    public RestaurantDto(Restaurant restaurant) {
+        this.restaurantId = restaurant.getId();
+        this.name = restaurant.getName();
+        this.description = restaurant.getDescription();
+        this.logoUrl = restaurant.getLogoUrl();
+        this.coverUrl = restaurant.getCoverUrl();
+        this.phone = restaurant.getPhone();
+        this.address = restaurant.getAddress();
+        this.openingHours = restaurant.getOpeningHours();
+        this.minOrderAmount = restaurant.getMinOrderAmount();
+        this.deliveryFee = restaurant.getDeliveryFee();
+        this.estimatedDeliveryTime = restaurant.getEstimatedDeliveryTime();
+        this.rating = restaurant.getRating();
+        this.totalOrders = restaurant.getTotalOrders();
+        this.status = restaurant.getStatus();
+        this.createdAt = restaurant.getCreatedAt();
     }
 
     // Getter和Setter方法

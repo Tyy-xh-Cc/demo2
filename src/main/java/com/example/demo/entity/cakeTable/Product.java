@@ -1,5 +1,6 @@
 package com.example.demo.entity.cakeTable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -7,24 +8,22 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "products", schema = "cake_table")
-public class Product {
+@Table(name = "products", schema = "cake_table", indexes = {
+        @Index(name = "idx_product_restaurant_id", columnList = "restaurant_id")
+})
+public class Product implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id", nullable = false)
     private Integer id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurant;
 
     @Column(name = "category_id")
     private Integer categoryId;
@@ -76,7 +75,12 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private Set<CartItem> cartItems = new LinkedHashSet<>();
-
+    @JsonIgnore
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
     public Integer getId() {
         return id;
     }

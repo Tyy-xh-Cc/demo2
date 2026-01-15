@@ -5,6 +5,8 @@ import com.example.demo.Service.UserService;
 import com.example.demo.entity.Dto.LoginResponse;
 import com.example.demo.entity.cakeTableDto.cart.*;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +16,8 @@ import java.util.List;
 @RequestMapping("/api/cart")
 @CrossOrigin(origins = "*")
 public class CartController {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(CartController.class);
     private final CartService cartService;
     private final UserService userService;
     
@@ -41,7 +44,6 @@ public class CartController {
             return ResponseEntity.status(401)
                     .body(new LoginResponse<>(false, "Token无效或已过期"));
         }
-        
         try {
             List<CartItemDto> cartItems = cartService.getCartItems(userId);
             
@@ -71,7 +73,6 @@ public class CartController {
     public ResponseEntity<?> addCartItem(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody CartItemRequestDto requestDto) {
-        
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401)
                     .body(new LoginResponse<>(false, "未授权访问，请先登录"));

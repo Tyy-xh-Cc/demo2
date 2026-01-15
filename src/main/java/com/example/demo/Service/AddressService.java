@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +35,29 @@ public class AddressService extends BaseService {
             return false;
         }
     }
+    public Optional<AddressDto> getDefaultAddressByToken(String token, UserService userService) {
+        try {
+            // 根据token获取用户ID
+            Integer userId = userService.getUserByToken(token) != null ?
+                    userService.getUserByToken(token).getId() : null;
+
+            if (userId == null) {
+                return Optional.empty();
+            }
+
+            return getDefaultAddressByUserId(userId);
+        } catch (Exception e) {
+            throw new RuntimeException("获取默认地址失败: " + e.getMessage());
+        }
+    }
+    public Optional<AddressDto> getDefaultAddressByUserId(Integer userId) {
+        try {
+            Optional<Address> defaultAddress = addressRepository.findDefaultAddressByUserId(userId);
+            return defaultAddress.map(this::convertToAddressDto);
+        } catch (Exception e) {
+            throw new RuntimeException("获取默认地址失败: " + e.getMessage());
+        }
+    }
     @Transactional
     public void createAddress(Integer userId, UpdateAddressRequest request) {
         try {
@@ -51,7 +75,15 @@ public class AddressService extends BaseService {
             address.setPhone(request.getPhone());
             address.setAddress(request.getAddress());
             address.setArea(request.getArea());
-            address.setIsDefault(request.getIsDefault() != null ? request.getIsDefault() : false);
+
+            // 处理默认地址逻辑
+            Boolean isDefault = request.getIsDefault() != null ? request.getIsDefault() : false;
+            address.setIsDefault(isDefault);
+
+            // 如果设置为默认地址，取消其他地址的默认状态
+            if (isDefault) {
+                addressRepository.unsetAllDefaultAddressesByUserId(userId);
+            }
 
             // 可选字段
             if (request.getLatitude() != null) {
@@ -63,23 +95,55 @@ public class AddressService extends BaseService {
 
             addressRepository.save(address);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             throw new RuntimeException("创建地址失败: " + e.getMessage());
         }
     }
+
     @Transactional
-    public AddressDto updateAddress(Integer addressId, UpdateAddressRequest request) {
+    public AddressDto updateAddress(Integer userId, Integer addressId, UpdateAddressRequest request) {
         try {
             Address address = addressRepository.findById(addressId)
                     .orElseThrow(() -> new RuntimeException("地址不存在"));
-            System.out.println(request.toString());
-            System.out.println(address.toString());
-            // 更新地址信息
-            address.setName(request.getName());
-            address.setReceiverName(request.getReceiverName());
-            address.setArea(request.getArea());
-            address.setPhone(request.getPhone());
-            address.setAddress(request.getAddress());
-            address.setIsDefault(request.getIsDefault());
+
+            Boolean oldIsDefault = address.getIsDefault();
+
+            // 处理默认地址逻辑
+            if (request.getIsDefault() && (!oldIsDefault || !address.getUser().getId().equals(userId))) {
+                // 如果设置为默认地址，且之前不是默认地址，或者用户ID发生变化
+                // 先取消该用户所有地址的默认状态
+                addressRepository.unsetAllDefaultAddressesByUserId(userId);
+
+                // 然后设置当前地址为默认地址
+                address.setIsDefault(true);
+
+                // 更新其他字段
+                address.setName(request.getName());
+                address.setReceiverName(request.getReceiverName());
+                address.setArea(request.getArea());
+                address.setPhone(request.getPhone());
+                address.setAddress(request.getAddress());
+
+            } else if (!request.getIsDefault() && oldIsDefault) {
+                // 如果从默认地址变为非默认地址
+                address.setIsDefault(false);
+
+                // 更新其他字段
+                address.setName(request.getName());
+                address.setReceiverName(request.getReceiverName());
+                address.setArea(request.getArea());
+                address.setPhone(request.getPhone());
+                address.setAddress(request.getAddress());
+
+            } else {
+                // 默认状态没有变化，只更新其他字段
+                address.setName(request.getName());
+                address.setReceiverName(request.getReceiverName());
+                address.setArea(request.getArea());
+                address.setPhone(request.getPhone());
+                address.setAddress(request.getAddress());
+                address.setIsDefault(request.getIsDefault());
+            }
 
             // 可选字段更新
             if (request.getLatitude() != null) {
@@ -94,6 +158,55 @@ public class AddressService extends BaseService {
 
         } catch (Exception e) {
             throw new RuntimeException("更新地址失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 设置地址为默认地址
+     */
+    @Transactional
+    public boolean setDefaultAddress(Integer addressId, Integer userId) {
+        try {
+            // 验证地址是否存在且属于该用户
+            Optional<Address> addressOpt = addressRepository.findById(addressId);
+            if (addressOpt.isEmpty()) {
+                return false;
+            }
+
+            Address address = addressOpt.get();
+            if (!address.getUser().getId().equals(userId)) {
+                return false; // 地址不属于当前用户
+            }
+
+            // 取消该用户所有地址的默认状态
+            addressRepository.unsetAllDefaultAddressesByUserId(userId);
+
+            // 设置指定地址为默认地址
+            addressRepository.setAddressAsDefault(addressId);
+
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("设置默认地址失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 通过token设置默认地址
+     */
+    @Transactional
+    public boolean setDefaultAddressByToken(Integer addressId, String token, UserService userService) {
+        try {
+            // 根据token获取用户ID
+            Integer userId = userService.getUserByToken(token) != null ?
+                    userService.getUserByToken(token).getId() : null;
+
+            if (userId == null) {
+                return false;
+            }
+
+            return setDefaultAddress(addressId, userId);
+        } catch (Exception e) {
+            throw new RuntimeException("设置默认地址失败: " + e.getMessage());
         }
     }
 

@@ -272,7 +272,6 @@ public class RestaurantService extends BaseService {
 
             // 获取分类列表
             List<ProductCategory> categories = productCategoryRepository.findByRestaurantId(restaurantId);
-
             return categories.stream()
                     .map(this::convertToSimpleDto)
                     .collect(Collectors.toList());

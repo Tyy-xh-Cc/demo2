@@ -324,10 +324,7 @@ public class ProductService extends BaseService {
      * 根据餐厅ID获取产品列表
      */
     public List<ProductDto> getProductsByRestaurantId(Integer restaurantId) {
-        List<Product> products = productRepository.findByRestaurantId(restaurantId);
-        return products.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        return  productRepository.findByRestaurantId(restaurantId);
     }
     
     /**

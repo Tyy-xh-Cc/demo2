@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -21,6 +22,62 @@ public class AddressController {
     public AddressController(AddressService addressService, UserService userService) {
         this.addressService = addressService;
         this.userService = userService;
+    }
+    @PutMapping("/addresses/{addressId}/default")
+    public ResponseEntity<RechargeResponse> setDefaultAddress(
+            @PathVariable Integer addressId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            // 检查Authorization头是否存在
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(null);
+            }
+
+            // 提取token
+            String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
+
+            // 设置默认地址
+            boolean success = addressService.setDefaultAddressByToken(addressId, token, userService);
+
+            if (success) {
+                RechargeResponse response = new RechargeResponse();
+                response.setSuccess(true);
+                response.setMessage("设置默认地址成功");
+                return ResponseEntity.ok(response);
+            } else {
+                RechargeResponse response = new RechargeResponse();
+                response.setSuccess(false);
+                response.setMessage("设置默认地址失败，地址不存在或不属于当前用户");
+                return ResponseEntity.status(404).body(response);
+            }
+
+        } catch (Exception e) {
+            RechargeResponse response = new RechargeResponse();
+            response.setSuccess(false);
+            response.setMessage("设置默认地址失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    @GetMapping("/addresses/default")
+    public ResponseEntity<AddressDto> getDefaultAddress(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            // 检查Authorization头是否存在
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(null);
+            }
+
+            // 提取token
+            String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
+
+            // 获取默认地址
+            Optional<AddressDto> defaultAddress = addressService.getDefaultAddressByToken(token, userService);
+
+            // 没有找到默认地址
+            return defaultAddress.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(404).body(null));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
     @PostMapping("/addresses")
     public ResponseEntity<RechargeResponse> createAddress(@RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -34,7 +91,7 @@ public class AddressController {
             // 提取token
             String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
             // 根据token获取用户ID
-            System.out.println(request.getArea());
+
             Integer userId = userService.getUserByToken(token) != null ?
                     userService.getUserByToken(token).getId() : null;
 
@@ -47,6 +104,7 @@ public class AddressController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().body(null);
         }
     }
@@ -76,9 +134,24 @@ public class AddressController {
         }
     }
     @PutMapping("/addresses/{addressId}")
-    public ResponseEntity<AddressDto> updateAddress(@PathVariable Integer addressId, @RequestBody UpdateAddressRequest request) {
+    public ResponseEntity<AddressDto> updateAddress(@RequestHeader(value = "Authorization", required = false) String authHeader,@PathVariable Integer addressId, @RequestBody UpdateAddressRequest request) {
         try {
-            AddressDto updatedAddress = addressService.updateAddress(addressId, request);
+            // 检查Authorization头是否存在
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(null);
+            }
+
+            // 提取token
+            String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
+
+            // 根据token获取用户ID
+            Integer userId = userService.getUserByToken(token) != null ?
+                    userService.getUserByToken(token).getId() : null;
+
+            if (userId == null) {
+                return ResponseEntity.status(401).body(null);
+            }
+            AddressDto updatedAddress = addressService.updateAddress(userId,addressId, request);
             return ResponseEntity.ok(updatedAddress);
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());

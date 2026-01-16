@@ -2,12 +2,14 @@ package com.example.demo.entity.cakeTableDto.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public class OrderDto {
     private String orderId;
     private Integer userId;
     private Integer restaurantId;
     private String restaurantName;
+    private List<OrderItemDto> orderItems;
     private BigDecimal totalAmount;
     private BigDecimal deliveryFee;
     private BigDecimal discountAmount;
@@ -184,5 +186,13 @@ public class OrderDto {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<OrderItemDto> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItemDto> orderItems) {
+        this.orderItems = orderItems;
     }
 }

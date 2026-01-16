@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class OrderItemRequest {
     private Integer productId;
     private Integer quantity;
+    private String productImage;
     private BigDecimal price;
     private BigDecimal totalPrice;
     private String productName;
@@ -67,5 +68,13 @@ public class OrderItemRequest {
     }
     public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
     }
 }

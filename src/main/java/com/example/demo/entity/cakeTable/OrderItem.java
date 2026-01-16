@@ -21,7 +21,6 @@ public class OrderItem {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
-
     @NotNull
     @Column(name = "product_id", nullable = false)
     private Integer productId;
@@ -46,6 +45,9 @@ public class OrderItem {
     @Lob
     @Column(name = "specifications")
     private String specifications;
+    @Size(max = 100)
+    @Column(name = "product_image", length = 100)
+    private String productImage;
 
     public Integer getId() {
         return id;
@@ -116,9 +118,15 @@ public class OrderItem {
         this.productName = product.getName();
         this.unitPrice = product.getPrice();
         this.totalPrice = product.getPrice();
+        this.productImage = product.getImageUrl();
     }
 
     public void setPrice(BigDecimal price) {
         this.totalPrice = price;
     }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
 }

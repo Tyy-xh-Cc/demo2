@@ -10,10 +10,7 @@ import com.example.demo.entity.cakeTable.OrderItem;
 import com.example.demo.entity.cakeTable.Restaurant;
 import com.example.demo.entity.cakeTable.Product;
 import com.example.demo.entity.cakeTable.User;
-import com.example.demo.entity.cakeTableDto.order.CreateOrderRequest;
-import com.example.demo.entity.cakeTableDto.order.OrderDto;
-import com.example.demo.entity.cakeTableDto.order.OrderItemRequest;
-import com.example.demo.entity.cakeTableDto.order.OrderQueryRequest;
+import com.example.demo.entity.cakeTableDto.order.*;
 import com.example.demo.utility.BaseService;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.commons.logging.Log;
@@ -198,6 +195,7 @@ public class OrderService extends BaseService {
                     Product product = new Product();
                     product.setId(itemRequest.getProductId());
                     product.setName(itemRequest.getProductName());
+                    product.setImageUrl(itemRequest.getProductImage());
                     product.setPrice(itemRequest.getPrice());
                     product.setOriginalPrice(itemRequest.getTotalPrice());
                     orderItem.setProduct(product);
@@ -226,7 +224,38 @@ public class OrderService extends BaseService {
     private String generateOrderId() {
         return "O" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
+    @Transactional
+    public OrderDto cancelOrder(String orderId, Integer userId) {
+        try {
+            // 查找订单
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("订单不存在"));
 
+            // 验证订单是否属于当前用户
+            if (!order.getUser().getId().equals(userId)) {
+                throw new RuntimeException("无权操作此订单");
+            }
+
+            // 检查订单状态是否可以取消
+            if ("cancelled".equals(order.getStatus()) || "completed".equals(order.getStatus())) {
+                throw new RuntimeException("订单状态不允许取消");
+            }
+
+            // 更新订单状态
+            order.setStatus("cancelled");
+            order.setCancelledAt(Instant.now());
+
+            // 保存更新后的订单
+            Order updatedOrder = orderRepository.save(order);
+
+            return convertToOrderDto(updatedOrder);
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("取消订单失败: " + e.getMessage());
+        }
+    }
     /**
      * 根据订单ID获取订单
      */
@@ -265,6 +294,9 @@ public class OrderService extends BaseService {
         dto.setUserId(order.getUser().getId());
         dto.setRestaurantId(order.getRestaurant().getId());
         dto.setRestaurantName(order.getRestaurant().getName());
+        dto.setOrderItems(order.getOrderItems().stream()
+                .map(this::convertToOrderItemDto)
+                .collect(Collectors.toList()));
         dto.setTotalAmount(order.getTotalAmount());
         dto.setDeliveryFee(order.getDeliveryFee());
         dto.setDiscountAmount(order.getDiscountAmount());
@@ -281,5 +313,18 @@ public class OrderService extends BaseService {
         dto.setCancelledAt(order.getCancelledAt());
         dto.setCreatedAt(order.getCreatedAt());
         return dto;
+    }
+
+    private OrderItemDto convertToOrderItemDto(OrderItem orderItem) {
+        return new OrderItemDto(
+                orderItem.getId(),
+                orderItem.getProductImage(),
+                orderItem.getProductId(),
+                orderItem.getProductName(),
+                orderItem.getQuantity(),
+                orderItem.getUnitPrice(),
+                orderItem.getTotalPrice(),
+                orderItem.getSpecifications()
+        );
     }
 }

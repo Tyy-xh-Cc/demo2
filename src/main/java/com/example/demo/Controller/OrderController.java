@@ -184,7 +184,44 @@ public class OrderController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+    @PostMapping("/orders/{orderId}/cancel")
+    public ResponseEntity<OrderDto> cancelOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        try {
+            // 检查Authorization头是否存在
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(null);
+            }
 
+            // 提取token
+            String token = authHeader.substring(7); // 去掉 "Bearer " 前缀
+
+            // 根据token获取用户ID
+            Integer userId = userService.getUserByToken(token) != null ?
+                    userService.getUserByToken(token).getId() : null;
+
+            if (userId == null) {
+                return ResponseEntity.status(401).body(null);
+            }
+
+            // 取消订单
+            OrderDto order = orderService.cancelOrder(orderId, userId);
+            return ResponseEntity.ok(order);
+
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("订单不存在")) {
+                return ResponseEntity.status(404).body(null);
+            } else if (e.getMessage().contains("无权操作此订单")) {
+                return ResponseEntity.status(403).body(null);
+            } else if (e.getMessage().contains("订单状态不允许取消")) {
+                return ResponseEntity.status(400).body(null);
+            }
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
     /**
      * 根据用户ID获取订单列表（管理员接口）
      */
